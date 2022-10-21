@@ -10,23 +10,26 @@ for D in /vox/*; do
     if [ -d "$D" ] && [ "`find .git -maxdepth 0 2> /dev/null`" == ".git" ]; then
         currentBranch=`git rev-parse --abbrev-ref HEAD`
 
-        if [ "$currentBranch" == "master" ]; then
+        if [ "$currentBranch" == "master" ] && [ "$D" != $apacheFilesDir ]; then
             printf "\n\n\n \e[32m Atualizando o projeto $D \n\n\n"
             git fetch upstream
             git pull upstream master
+        elif [ "$D" == $apacheFilesDir ];then
+            printf "Atualizando apache-files\n"
+            git stash push -m "update_repos_$date"
+            git checkout master
+            git fetch upstream
+            git pull upstream master
+            git stash apply stash^{/"update_repos_$date"}
         else
             printf "Branch atual ==> $currentBranch\n"
             printf "Trocando para branch master\n"
-            printf "Salvando alterações no stash com nome update-repos $date\n"
-            git stash save "update-repos $date"
+            printf "Salvando alterações no stash\n"
+            git stash push -m "$currentBranch - update_repos_$date"
             printf "\n\n\n Atualizando o projeto $D \n\n\n"
             git checkout master
             git fetch upstream
             git pull upstream master
-            if [ "$D" != $apacheFilesDir ];then
-                # Aplicação do stash para manter as alterações do hosts
-                git stash apply 0
-            fi
         fi
 
 
